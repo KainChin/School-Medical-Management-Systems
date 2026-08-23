@@ -463,6 +463,34 @@ const StudentHealthProfile = () => {
                     style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "4px" }}
                   />
                 </div>
+                <div>
+                  <label style={{ fontSize: "13px", fontWeight: "600" }}>Thị lực</label>
+                  <select
+                    value={newStudent.vision}
+                    onChange={(e) => setNewStudent({ ...newStudent, vision: e.target.value })}
+                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "4px" }}
+                  >
+                    <option value="10/10">10/10 (Mắt tốt)</option>
+                    <option value="9/10">9/10</option>
+                    <option value="8/10">8/10</option>
+                    <option value="7/10">7/10</option>
+                    <option value="Cận thị">Cận thị</option>
+                    <option value="Viễn thị">Viễn thị</option>
+                    <option value="Loạn thị">Loạn thị</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: "13px", fontWeight: "600" }}>Thính lực</label>
+                  <select
+                    value={newStudent.hearing}
+                    onChange={(e) => setNewStudent({ ...newStudent, hearing: e.target.value })}
+                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "4px" }}
+                  >
+                    <option value="Tốt">Tốt</option>
+                    <option value="Bình thường">Bình thường</option>
+                    <option value="Suy giảm nhẹ">Suy giảm nhẹ</option>
+                  </select>
+                </div>
               </div>
 
               <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
