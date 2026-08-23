@@ -74,4 +74,10 @@ public class StudentServiceImpl implements IStudentService {
     public Optional<Appuser> getParentEmailByStudentId(int studentId) {
         return studentRepository.findParentEmailByStudentId(studentId);
     }
+
+    @Override
+    @Transactional
+    public void updateStudentWithHealthInfo(int studentId, Student student, Healthinfo healthinfo) {
+        studentRepository.updateStudentWithHealthInfo(studentId, student, healthinfo);
+    }
 }
