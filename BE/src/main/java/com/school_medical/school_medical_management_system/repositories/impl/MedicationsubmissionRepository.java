@@ -19,8 +19,8 @@ public class MedicationsubmissionRepository implements IMedicationsubmissionRepo
     @Override
     public void save(Medicationsubmission submission) {
         String sql = "INSERT INTO medicationsubmission " +
-                "(medication_name, dosage, frequency, start_date, end_date, status, parent_user_id, student_id, approved_by) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(medication_name, dosage, frequency, start_date, end_date, status, parent_user_id, student_id, approved_by, image_url) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -34,6 +34,7 @@ public class MedicationsubmissionRepository implements IMedicationsubmissionRepo
             ps.setObject(7, submission.getParentUserId());
             ps.setObject(8, submission.getStudentId());
             ps.setObject(9, submission.getApprovedBy());
+            ps.setString(10, submission.getImageUrl());
             ps.executeUpdate();
 
         } catch (SQLException e) {
@@ -64,6 +65,7 @@ public class MedicationsubmissionRepository implements IMedicationsubmissionRepo
                         setParentUserId(rs.getInt("parent_user_id"));
                         setStudentId(rs.getInt("student_id"));
                         setApprovedBy(rs.getObject("approved_by") != null ? rs.getInt("approved_by") : null);
+                        setImageUrl(rs.getString("image_url"));
                     }});
                 }
                 return submissions;

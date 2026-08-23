@@ -2,21 +2,20 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import Footer from "../../components/Footer/Footer";
-import { X } from "lucide-react";
+import PrescriptionForm from "./PrescriptionForm";
+import PrescriptionList from "./PrescriptionList";
 import "./SendPrescription.css";
 
 export default function SendPrescription() {
   const navigate = useNavigate();
 
-  // 1) Lấy token JWT (hỗ trợ cả key "token" hoặc "jwt")
-  const getToken = () =>
-    localStorage.getItem("token") || localStorage.getItem("jwt");
+  const getToken = () => localStorage.getItem("token") || localStorage.getItem("jwt");
 
-  // 2) Lấy thông tin phụ huynh từ localStorage làm initial
   const [user, setUser] = useState({
     name: localStorage.getItem("userName") || "",
     id: parseInt(localStorage.getItem("userId") || "0", 10),
   });
+
   useEffect(() => {
     const token = getToken();
     if (!token) return;
@@ -27,23 +26,23 @@ export default function SendPrescription() {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((me) => {
         const userId = me.user_id || me.userId || me.id;
-        // Lấy tên từ localStorage, không lấy từ API
         const userName = localStorage.getItem("userName") || "Phụ huynh";
-        setUser({
-          name: userName,
-          id: userId,
-        });
+        setUser({ name: userName, id: userId });
         localStorage.setItem("userId", userId?.toString() || "");
       })
       .catch(console.error);
   }, []);
 
-  // 3) State cho form, danh sách con, items, và message status
+  function today() {
+    return new Date().toISOString().split("T")[0];
+  }
+
   const [form, setForm] = useState({
     selectedIndex: "",
     drugName: "",
     dose: "",
     note: "",
+    imageUrl: "",
     startDate: today(),
     endDate: today(),
   });
@@ -52,31 +51,28 @@ export default function SendPrescription() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
 
-  function today() {
-    return new Date().toISOString().split("T")[0];
-  }
-
-  // Fetch children nếu đã login
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    fetch("http://localhost:8080/my-children", {
+    fetch("http://localhost:8080/api/students/my-children", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => {
-        setStudents(
-          data.map((c) => ({
-            studentId: c.studentId ?? c.id,
-            studentName: c.studentName ?? c.name,
-            parentName: c.parentName,
-          }))
-        );
+      .then((res) => {
+        const list = res.data || res;
+        if (Array.isArray(list)) {
+          setStudents(
+            list.map((c) => ({
+              studentId: c.studentId ?? c.id,
+              studentName: c.studentName ?? c.name,
+              parentName: c.parentName || user.name,
+            }))
+          );
+        }
       })
       .catch(console.error);
-  }, []);
+  }, [user.name]);
 
-  // Xử lý form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => {
@@ -84,8 +80,7 @@ export default function SendPrescription() {
       if (name === "startDate") {
         const minStart = today();
         if (value < minStart) updated.startDate = minStart;
-        if (updated.endDate < updated.startDate)
-          updated.endDate = updated.startDate;
+        if (updated.endDate < updated.startDate) updated.endDate = updated.startDate;
       }
       if (name === "endDate" && value < updated.startDate) {
         updated.endDate = updated.startDate;
@@ -94,54 +89,66 @@ export default function SendPrescription() {
     });
   };
 
-  // Thêm hoặc cập nhật thuốc
   const handleAddOrUpdate = () => {
-    if (
-      !form.selectedIndex ||
-      !form.drugName.trim() ||
-      !form.dose.trim() ||
-      !form.note.trim()
-    )
+    if (form.selectedIndex === "") {
+      alert("⚠️ Vui lòng chọn học sinh!");
       return;
-    if (isNaN(Number(form.dose))) return;
-    const note = form.note.trim();
-    if (!/^[0-9]+\s*lần\/(ngày|tuần|tháng)$/.test(note)) return;
+    }
+    if (!form.drugName.trim()) {
+      alert("⚠️ Vui lòng nhập tên thuốc!");
+      return;
+    }
+    if (!form.dose.trim() || isNaN(Number(form.dose))) {
+      alert("⚠️ Liều lượng thuốc phải là con số hợp lệ!");
+      return;
+    }
+    if (!form.note.trim()) {
+      alert("⚠️ Vui lòng nhập số lần uống!");
+      return;
+    }
 
+    // ✅ BẮT BUỘC ĐÍNH KÈM HÌNH ẢNH THUỐC
+    if (!form.imageUrl) {
+      alert("⚠️ Vui lòng tải lên HÌNH ẢNH THUỐC để y tá dễ dàng kiểm tra!");
+      return;
+    }
+
+    const note = form.note.trim();
     const stu = students[Number(form.selectedIndex)];
+
     const entry = {
       studentId: stu.studentId,
       studentName: stu.studentName,
       medicationName: form.drugName.trim(),
       dosage: form.dose.trim() + "mg",
       frequency: note,
+      imageUrl: form.imageUrl,
       startDate: form.startDate,
       endDate: form.endDate,
-      parentName: stu.parentName,
+      parentName: stu.parentName || user.name,
       status: "PENDING",
       parentUserId: user.id,
     };
 
     if (editingIndex != null) {
-      setItems((list) =>
-        list.map((it, i) => (i === editingIndex ? entry : it))
-      );
+      setItems((list) => list.map((it, i) => (i === editingIndex ? entry : it)));
     } else {
       setItems((list) => [...list, entry]);
     }
-    setForm((f) => ({ ...f, drugName: "", dose: "", note: "" }));
+    setForm((f) => ({ ...f, drugName: "", dose: "", note: "", imageUrl: "" }));
     setEditingIndex(null);
-    setStatusMessage(""); // reset message khi chỉnh sửa hoặc thêm mới
+    setStatusMessage("");
   };
 
-  // Bắt đầu chỉnh sửa item
   const handleEditItem = (idx) => {
     const it = items[idx];
     const foundIdx = students.findIndex((s) => s.studentId === it.studentId);
     setForm({
-      selectedIndex: String(foundIdx),
+      selectedIndex: String(foundIdx !== -1 ? foundIdx : ""),
       drugName: it.medicationName,
       dose: it.dosage.replace(/mg$/, ""),
       note: it.frequency,
+      imageUrl: it.imageUrl || "",
       startDate: it.startDate,
       endDate: it.endDate,
     });
@@ -149,14 +156,12 @@ export default function SendPrescription() {
     setStatusMessage("");
   };
 
-  // Xóa item
   const removeItem = (idx) => {
     setItems((list) => list.filter((_, i) => i !== idx));
     if (editingIndex === idx) setEditingIndex(null);
     setStatusMessage("");
   };
 
-  // Gửi thuốc
   const handleConfirmSend = async () => {
     if (!items.length) return;
     const token = getToken();
@@ -166,27 +171,23 @@ export default function SendPrescription() {
     }
 
     try {
-      // Gửi từng item một
-      const promises = items.map((item) => {
-        console.log("Sending item:", item); // Thêm dòng này
-        return fetch("http://localhost:8080/api/medication-submissions", {
+      const promises = items.map((item) =>
+        fetch("http://localhost:8080/api/medication-submissions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(item),
-        });
-      });
+        })
+      );
 
       const responses = await Promise.all(promises);
-
-      // Kiểm tra tất cả response
       const allSuccess = responses.every((res) => res.ok);
 
       if (allSuccess) {
         setItems([]);
-        setStatusMessage("Gửi đơn thuốc thành công!");
+        setStatusMessage("🎉 Gửi đơn thuốc thành công cho y tá nhà trường!");
       } else {
         const firstError = responses.find((res) => !res.ok);
         const errorText = await firstError.text();
@@ -203,156 +204,31 @@ export default function SendPrescription() {
       <Header />
       <div className="breadcrumb-container">
         <nav className="breadcrumb">
-          <Link to="/" className="breadcrumb-link">
-            Trang chủ
-          </Link>
+          <Link to="/" className="breadcrumb-link">Trang chủ</Link>
           <span className="breadcrumb-sep">›</span>
-          <Link to="/services" className="breadcrumb-link">
-            Dịch vụ
-          </Link>
+          <Link to="/services" className="breadcrumb-link">Dịch vụ</Link>
           <span className="breadcrumb-sep">›</span>
           <span className="breadcrumb-current">Gửi đơn thuốc</span>
         </nav>
       </div>
       <div className="send-prescription-page">
         <div className="send-prescription-content">
-          <div className="form-column">
-            {/* --- Form inputs --- */}
-            <div className="field">
-              <label>Tên học sinh</label>
-              <select
-                name="selectedIndex"
-                value={form.selectedIndex}
-                onChange={handleChange}
-              >
-                <option value="">-- Chọn học sinh --</option>
-                {students.map((s, i) => (
-                  <option key={s.studentId || i} value={String(i)}>
-                    {s.studentName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label>Người gửi</label>
-              <input
-                type="text"
-                readOnly
-                value={
-                  students.length > 0
-                    ? form.selectedIndex === ""
-                      ? students[0].parentName
-                      : students[Number(form.selectedIndex)].parentName
-                    : user.name
-                }
-              />
-            </div>
-            <div className="two-fields">
-              <div className="field">
-                <label>Tên thuốc</label>
-                <input
-                  name="drugName"
-                  value={form.drugName}
-                  onChange={handleChange}
-                  placeholder="Ví dụ: Paracetamol"
-                />
-              </div>
-              <div className="field">
-                <label>Liều lượng (mg)</label>
-                <input
-                  name="dose"
-                  value={form.dose}
-                  onChange={handleChange}
-                  placeholder="Ví dụ: 500"
-                />
-              </div>
-            </div>
-            <div className="field">
-              <label>Số lần uống</label>
-              <input
-                name="note"
-                value={form.note}
-                onChange={handleChange}
-                placeholder="Ví dụ: 2 lần/ngày hoặc 3 lần/tuần hoặc 1 lần/tháng"
-                required
-                pattern="^[0-9]+\s*lần\/(ngày|tuần|tháng)$"
-              />
-            </div>
-            <div className="two-fields">
-              <div className="field">
-                <label>Ngày bắt đầu</label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={form.startDate}
-                  onChange={handleChange}
-                  min={today()}
-                />
-              </div>
-              <div className="field">
-                <label>Ngày kết thúc</label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={form.endDate}
-                  onChange={handleChange}
-                  min={form.startDate || today()}
-                />
-              </div>
-            </div>
-            <button className="btn-add" onClick={handleAddOrUpdate}>
-              {editingIndex != null ? "Cập nhật thuốc" : "Thêm thuốc"}
-            </button>
-          </div>
-
-          <div className="items-column">
-            <h3>Danh sách thuốc được gửi</h3>
-            {items.map((it, idx) => (
-              <div
-                key={idx}
-                className="prescription-item"
-                onClick={() => handleEditItem(idx)}
-              >
-                <button
-                  className="remove-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeItem(idx);
-                  }}
-                >
-                  <X size={16} />
-                </button>
-                <h4>{it.medicationName}</h4>
-                <p className="student-name">Học sinh: {it.studentName}</p>
-                <p className="dose">Liều lượng (mg): {it.dosage}</p>
-                <p className="note">Số lần uống: {it.frequency}</p>
-                <p className="sender">Người gửi: {it.parentName}</p>
-                <p className="meta">
-                  {it.startDate} → {it.endDate}
-                </p>
-              </div>
-            ))}
-
-            {items.length > 0 && (
-              <button className="btn-confirm" onClick={handleConfirmSend}>
-                Xác nhận gửi thuốc
-              </button>
-            )}
-
-            {/* Thông báo kết quả */}
-            {statusMessage && (
-              <div
-                className={`status-alert ${
-                  statusMessage.startsWith("Error") ||
-                  statusMessage.startsWith("❌")
-                    ? "error"
-                    : "success"
-                }`}
-              >
-                {statusMessage}
-              </div>
-            )}
-          </div>
+          <PrescriptionForm
+            form={form}
+            setForm={setForm}
+            students={students}
+            user={user}
+            editingIndex={editingIndex}
+            handleAddOrUpdate={handleAddOrUpdate}
+            handleChange={handleChange}
+          />
+          <PrescriptionList
+            items={items}
+            handleEditItem={handleEditItem}
+            removeItem={removeItem}
+            handleConfirmSend={handleConfirmSend}
+            statusMessage={statusMessage}
+          />
         </div>
       </div>
       <Footer />
