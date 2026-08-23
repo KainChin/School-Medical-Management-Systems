@@ -17,4 +17,5 @@ public interface IStudentService {
     List<VaccinationParentDeclaration> getVaccinationInfoByUserId(int userId);
     List<Student> getStudentsByParentUserId(int parentUserId);
     Optional<Appuser> getParentEmailByStudentId(int studentId);
+    void updateStudentWithHealthInfo(int studentId, Student student, Healthinfo healthinfo);
 }

@@ -171,14 +171,28 @@ public class StudentRepositoryImpl implements IStudentRepository {
         WHERE ps.student_id = ?
     """;
 
-        // Sử dụng query để lấy kết quả và kiểm tra
         List<Appuser> parents = jdbcTemplate.query(sql, new Object[]{studentId}, (rs, rowNum) -> {
             Appuser parent = new Appuser();
             parent.setEmail(rs.getString("email"));
             return parent;
         });
 
-        // Nếu tìm thấy phụ huynh, trả về Optional chứa đối tượng, nếu không trả về Optional.empty()
         return parents.isEmpty() ? Optional.empty() : Optional.of(parents.get(0));
+    }
+
+    @Override
+    public void updateStudentWithHealthInfo(int studentId, Student student, Healthinfo healthinfo) {
+        String sqlStudent = "UPDATE student SET name = ?, date_of_birth = ?, gender = ?, grade = ?, class_id = ? WHERE student_id = ?";
+        jdbcTemplate.update(sqlStudent, student.getName(), student.getDateOfBirth(), student.getGender(), student.getGrade(), student.getClassId(), studentId);
+
+        String checkHealthSql = "SELECT COUNT(*) FROM healthinfo WHERE student_id = ?";
+        Integer count = jdbcTemplate.queryForObject(checkHealthSql, Integer.class, studentId);
+        if (count != null && count > 0) {
+            String sqlHealth = "UPDATE healthinfo SET allergy = ?, chronic_disease = ?, vision = ?, hearing = ?, medical_history = ?, height = ?, weight = ?, bmi = ? WHERE student_id = ?";
+            jdbcTemplate.update(sqlHealth, healthinfo.getAllergy(), healthinfo.getChronicDisease(), healthinfo.getVision(), healthinfo.getHearing(), healthinfo.getMedicalHistory(), healthinfo.getHeight(), healthinfo.getWeight(), healthinfo.getBmi(), studentId);
+        } else {
+            healthinfo.setStudentId(studentId);
+            saveHealthInfo(healthinfo);
+        }
     }
 }

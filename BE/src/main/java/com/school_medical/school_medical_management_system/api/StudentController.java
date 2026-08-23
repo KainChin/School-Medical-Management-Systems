@@ -152,12 +152,40 @@ public class StudentController {
     public ResponseEntity<String> getParentEmailByStudentId(@PathVariable int studentId) {
         Optional<Appuser> parentEmail = studentService.getParentEmailByStudentId(studentId);
 
-        // Nếu tìm thấy email phụ huynh, trả về email
         if (parentEmail.isPresent()) {
             return ResponseEntity.ok(parentEmail.get().getEmail());
         }
 
-        // Nếu không tìm thấy, trả về thông báo lỗi
         return ResponseEntity.status(404).body("Parent not found for student ID: " + studentId);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ApiResponse<String>> updateStudentWithHealthInfo(@PathVariable int id, @RequestBody StudentHealthRequest request) {
+        try {
+            Student student = new Student();
+            student.setName(request.getStudentName());
+            if (request.getDob() != null) {
+                student.setDateOfBirth(request.getDob().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+            }
+            student.setGender(request.getGender());
+            student.setGrade(request.getGrade());
+            student.setClassId(request.getClassId());
+
+            Healthinfo healthinfo = new Healthinfo();
+            healthinfo.setAllergy(request.getAllergy());
+            healthinfo.setChronicDisease(request.getChronicDisease());
+            healthinfo.setVision(request.getVision());
+            healthinfo.setHearing(request.getHearing());
+            healthinfo.setMedicalHistory(request.getMedicalHistory());
+            healthinfo.setHeight(request.getHeight());
+            healthinfo.setWeight(request.getWeight());
+            healthinfo.setBmi(request.getBmi());
+
+            studentService.updateStudentWithHealthInfo(id, student, healthinfo);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Cập nhật hồ sơ học sinh thành công!", "Success"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Lỗi cập nhật: " + e.getMessage(), null));
+        }
     }
 }
