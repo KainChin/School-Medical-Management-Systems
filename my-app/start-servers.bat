@@ -11,7 +11,7 @@ start "React Frontend" cmd /k "npm start"
 
 echo.
 echo ✅ Both servers are starting up...
-echo 📰 News API: http://localhost:5000
+echo 📰 News API: http://localhost:5001
 echo 🌐 Frontend: http://localhost:3000
 echo.
 echo Press any key to close this window...

@@ -48,6 +48,24 @@ public class MedicalEventController {
     }
 
     /**
+     * Tạo mới sự kiện y tế cùng danh sách vật tư sử dụng
+     */
+    @PostMapping("/with-supplies")
+    public ResponseEntity<ApiResponse<MedicalEvent>> createMedicalEventWithSupplies(@RequestBody com.school_medical.school_medical_management_system.models.MedicalEventRequest request) {
+        try {
+            MedicalEvent createdEvent = medicalEventService.createEventWithSupplies(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>(true, "Tạo sự kiện và cấp phát vật tư thành công", createdEvent));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Lỗi hệ thống: " + e.getMessage(), null));
+        }
+    }
+
+    /**
      * Cập nhật sự kiện y tế theo ID
      */
     @PutMapping("/{id}")

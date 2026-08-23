@@ -68,9 +68,9 @@ function NewsSection() {
 
   const fetchNewsFromAPI = async () => {
     try {
-      let response = await fetch("http://localhost:5000/api/news/full?limit=6");
+      let response = await fetch("http://localhost:5001/api/news/full?limit=6");
       if (!response.ok) {
-        response = await fetch("http://localhost:5000/api/news?limit=5");
+        response = await fetch("http://localhost:5001/api/news?limit=5");
       }
       if (response.ok) {
         const data = await response.json();
