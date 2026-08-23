@@ -10,11 +10,30 @@ export default function SendPrescription() {
   const navigate = useNavigate();
 
   const getToken = () => localStorage.getItem("token") || localStorage.getItem("jwt");
+  function today() {
+    return new Date().toISOString().split("T")[0];
+  }
 
   const [user, setUser] = useState({
     name: localStorage.getItem("userName") || "",
     id: parseInt(localStorage.getItem("userId") || "0", 10),
   });
+
+  const [form, setForm] = useState({
+    selectedIndex: "",
+    drugName: "",
+    dose: "",
+    note: "",
+    imageUrl: "",
+    startDate: today(),
+    endDate: today(),
+  });
+
+  const [students, setStudents] = useState([]);
+  const [items, setItems] = useState([]);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -32,24 +51,6 @@ export default function SendPrescription() {
       })
       .catch(console.error);
   }, []);
-
-  function today() {
-    return new Date().toISOString().split("T")[0];
-  }
-
-  const [form, setForm] = useState({
-    selectedIndex: "",
-    drugName: "",
-    dose: "",
-    note: "",
-    imageUrl: "",
-    startDate: today(),
-    endDate: today(),
-  });
-  const [students, setStudents] = useState([]);
-  const [items, setItems] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
     const token = getToken();
@@ -89,13 +90,14 @@ export default function SendPrescription() {
     });
   };
 
-  const handleAddOrUpdate = () => {
+  // ✅ THÊM HOẶC CẬP NHẬT THUỐC VÀO DANH SÁCH + TỰ ĐỘNG RESET Ô NHẬP THUỐC
+  const handleAddToList = () => {
     if (form.selectedIndex === "") {
-      alert("⚠️ Vui lòng chọn học sinh!");
+      alert("⚠️ Vui lòng chọn Học sinh!");
       return;
     }
     if (!form.drugName.trim()) {
-      alert("⚠️ Vui lòng nhập tên thuốc!");
+      alert("⚠️ Vui lòng nhập Tên thuốc!");
       return;
     }
     if (!form.dose.trim() || isNaN(Number(form.dose))) {
@@ -103,25 +105,21 @@ export default function SendPrescription() {
       return;
     }
     if (!form.note.trim()) {
-      alert("⚠️ Vui lòng nhập số lần uống!");
+      alert("⚠️ Vui lòng nhập Số lần uống!");
       return;
     }
-
-    // ✅ BẮT BUỘC ĐÍNH KÈM HÌNH ẢNH THUỐC
     if (!form.imageUrl) {
-      alert("⚠️ Vui lòng tải lên HÌNH ẢNH THUỐC để y tá dễ dàng kiểm tra!");
+      alert("⚠️ Vui lòng tải ảnh hoặc dán URL HÌNH ẢNH THUỐC!");
       return;
     }
 
-    const note = form.note.trim();
     const stu = students[Number(form.selectedIndex)];
-
     const entry = {
       studentId: stu.studentId,
       studentName: stu.studentName,
       medicationName: form.drugName.trim(),
       dosage: form.dose.trim() + "mg",
-      frequency: note,
+      frequency: form.note.trim(),
       imageUrl: form.imageUrl,
       startDate: form.startDate,
       endDate: form.endDate,
@@ -135,6 +133,8 @@ export default function SendPrescription() {
     } else {
       setItems((list) => [...list, entry]);
     }
+
+    // Reset ô nhập thuốc để phụ huynh gõ thuốc tiếp theo siêu nhanh!
     setForm((f) => ({ ...f, drugName: "", dose: "", note: "", imageUrl: "" }));
     setEditingIndex(null);
     setStatusMessage("");
@@ -162,6 +162,7 @@ export default function SendPrescription() {
     setStatusMessage("");
   };
 
+  // ✅ GỬI TOÀN BỘ DANH SÁCH THUỐC
   const handleConfirmSend = async () => {
     if (!items.length) return;
     const token = getToken();
@@ -170,6 +171,7 @@ export default function SendPrescription() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const promises = items.map((item) =>
         fetch("http://localhost:8080/api/medication-submissions", {
@@ -187,15 +189,15 @@ export default function SendPrescription() {
 
       if (allSuccess) {
         setItems([]);
-        setStatusMessage("🎉 Gửi đơn thuốc thành công cho y tá nhà trường!");
+        setStatusMessage(`🎉 Gửi thành công đơn gồm ${items.length} loại thuốc cho Y tá nhà trường!`);
       } else {
-        const firstError = responses.find((res) => !res.ok);
-        const errorText = await firstError.text();
-        setStatusMessage(`Error ${firstError.status}: ${errorText}`);
+        setStatusMessage("❌ Không gửi được đơn thuốc. Vui lòng thử lại.");
       }
     } catch (err) {
       console.error("Lỗi gửi thuốc:", err);
-      setStatusMessage("❌ Không gửi được đơn, vui lòng thử lại.");
+      setStatusMessage("❌ Lỗi kết nối máy chủ, vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -219,8 +221,9 @@ export default function SendPrescription() {
             students={students}
             user={user}
             editingIndex={editingIndex}
-            handleAddOrUpdate={handleAddOrUpdate}
+            handleAddToList={handleAddToList}
             handleChange={handleChange}
+            today={today}
           />
           <PrescriptionList
             items={items}
@@ -228,6 +231,7 @@ export default function SendPrescription() {
             removeItem={removeItem}
             handleConfirmSend={handleConfirmSend}
             statusMessage={statusMessage}
+            isSubmitting={isSubmitting}
           />
         </div>
       </div>
