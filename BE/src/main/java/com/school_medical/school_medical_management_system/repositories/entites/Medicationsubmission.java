@@ -14,6 +14,15 @@ public class Medicationsubmission {
     private String status;
     private Integer studentId;
     private Integer approvedBy;
+    private String imageUrl;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 
     public String getMedicationName() {
         return medicationName;
