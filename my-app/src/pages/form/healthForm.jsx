@@ -429,25 +429,33 @@ export default function HealthFormApp() {
                   <label className="mb-2 text-sm font-medium text-gray-700">
                     Thị lực
                   </label>
-                  <input
-                    type="text"
-                    placeholder="VD: 10/10 hoặc Cận 1.5 độ"
+                  <select
                     className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     value={formData.vision}
                     onChange={(e) => handleChange("vision", e.target.value)}
-                  />
+                  >
+                    <option value="10/10">10/10 (Mắt tốt)</option>
+                    <option value="9/10">9/10</option>
+                    <option value="8/10">8/10</option>
+                    <option value="7/10">7/10</option>
+                    <option value="Cận thị">Cận thị</option>
+                    <option value="Viễn thị">Viễn thị</option>
+                    <option value="Loạn thị">Loạn thị</option>
+                  </select>
                 </div>
                 <div className="flex flex-col">
                   <label className="mb-2 text-sm font-medium text-gray-700">
                     Thính lực
                   </label>
-                  <input
-                    type="text"
-                    placeholder="VD: Tốt"
+                  <select
                     className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     value={formData.hearing}
                     onChange={(e) => handleChange("hearing", e.target.value)}
-                  />
+                  >
+                    <option value="Tốt">Tốt</option>
+                    <option value="Bình thường">Bình thường</option>
+                    <option value="Suy giảm nhẹ">Suy giảm nhẹ</option>
+                  </select>
                 </div>
               </div>
             </fieldset>
