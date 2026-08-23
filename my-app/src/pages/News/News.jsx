@@ -6,7 +6,7 @@ import newsData from '../../data/newsData';
 import './News.css';
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 // Categories for filtering
 const NEWS_CATEGORIES = [

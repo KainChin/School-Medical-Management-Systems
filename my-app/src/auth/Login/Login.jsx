@@ -84,11 +84,11 @@ export default function Login() {
 
   // ✅ Điều hướng theo vai trò
   const redirectByRole = (role) => {
-    if (role === "Admin") {
+    if (role === "Admin" || role === "Manager" || role === "Headmaster") {
       navigate("/admin");
     } else if (role === "SchoolNurse") {
       navigate("/nurse");
-    } else if (role === "Parent") {
+    } else if (role === "Parent" || role === "Student") {
       navigate("/");
     } else {
       alert("Vai trò không được hỗ trợ!");

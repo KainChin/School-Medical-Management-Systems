@@ -10,7 +10,7 @@ const ApiStatus = () => {
 
     const checkApiStatus = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/health', {
+            const response = await fetch('http://localhost:5001/api/health', {
                 method: 'GET',
                 timeout: 3000
             });

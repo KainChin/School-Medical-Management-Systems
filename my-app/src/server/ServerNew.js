@@ -4,7 +4,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
