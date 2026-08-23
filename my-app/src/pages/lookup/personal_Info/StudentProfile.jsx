@@ -18,6 +18,7 @@ const StudentHealthProfile = () => {
 
   const [children, setChildren] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [classList, setClassList] = useState([]);
   const [profile, setProfile] = useState({
     allergy: "",
     chronicDisease: "",
@@ -72,6 +73,36 @@ const StudentHealthProfile = () => {
 
   useEffect(() => {
     fetchMyChildren();
+
+    // Fetch danh sách lớp học từ Backend
+    fetch("http://localhost:8080/api/classes")
+      .then((res) => res.json())
+      .then((data) => {
+        const classes = Array.isArray(data) ? data : (data.data || []);
+        if (classes.length > 0) {
+          setClassList(classes);
+          const firstCls = classes[0];
+          setNewStudent((prev) => ({
+            ...prev,
+            classId: firstCls.id || firstCls.class_id || 1,
+            grade: firstCls.className || "5A1"
+          }));
+        } else {
+          // Fallback mặc định
+          setClassList([
+            { id: 1, className: "5A1" },
+            { id: 2, className: "5A2" },
+            { id: 3, className: "4C1" }
+          ]);
+        }
+      })
+      .catch(() => {
+        setClassList([
+          { id: 1, className: "5A1" },
+          { id: 2, className: "5A2" },
+          { id: 3, className: "4C1" }
+        ]);
+      });
   }, [userId, token]);
 
   useEffect(() => {
@@ -143,8 +174,8 @@ const StudentHealthProfile = () => {
         studentName: "",
         dob: "",
         gender: "Male",
-        grade: "5A1",
-        classId: 1,
+        grade: classList[0]?.className || "5A1",
+        classId: classList[0]?.id || 1,
         relationship: "Father",
         height: 150,
         weight: 45,
@@ -315,13 +346,29 @@ const StudentHealthProfile = () => {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: "13px", fontWeight: "600" }}>Khối/Lớp</label>
-                  <input
-                    type="text"
-                    value={newStudent.grade}
-                    onChange={(e) => setNewStudent({ ...newStudent, grade: e.target.value })}
+                  <label style={{ fontSize: "13px", fontWeight: "600" }}>Chọn Khối / Lớp</label>
+                  <select
+                    value={newStudent.classId}
+                    onChange={(e) => {
+                      const selectedId = Number(e.target.value);
+                      const cls = classList.find((c) => (c.id || c.class_id) === selectedId);
+                      setNewStudent({
+                        ...newStudent,
+                        classId: selectedId,
+                        grade: cls ? cls.className : "5A1"
+                      });
+                    }}
                     style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "4px" }}
-                  />
+                  >
+                    {classList.map((cls) => {
+                      const cId = cls.id || cls.class_id;
+                      return (
+                        <option key={cId || cls.className} value={cId}>
+                          Lớp {cls.className} {cls.room ? `(${cls.room})` : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </div>
                 <div>
                   <label style={{ fontSize: "13px", fontWeight: "600" }}>Mối quan hệ</label>
