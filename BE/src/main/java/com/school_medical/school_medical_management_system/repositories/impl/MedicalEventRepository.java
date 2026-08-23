@@ -75,19 +75,25 @@ public class MedicalEventRepository implements IMedicalEventRepository {
     }
 
     @Override
-    public void createEvent(MedicalEvent event) {
+    public MedicalEvent createEvent(MedicalEvent event) {
         String sql = "INSERT INTO MedicalEvent (event_type, event_date, description, student_id, nurse_id, status) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, event.getEventType());
             ps.setDate(2, Date.valueOf(event.getEventDate()));
             ps.setString(3, event.getDescription());
             ps.setLong(4, event.getStudentId());
             ps.setLong(5, event.getNurseId());
-            ps.setString(6, "Pending");
+            ps.setString(6, event.getStatus() != null ? event.getStatus() : "Pending");
             ps.executeUpdate();
-
+            
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    event.setEventId(generatedKeys.getLong(1));
+                }
+            }
+            return event;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

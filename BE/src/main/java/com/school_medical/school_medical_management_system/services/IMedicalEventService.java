@@ -11,4 +11,5 @@ public interface IMedicalEventService {
     MedicalEvent updateEvent(Long id, MedicalEvent eventDTO);
     MedicalEvent approveEvent(Long id, ApprovalRequest approvalRequest);
     MedicalEvent getEventById(Long id); // Phương thức mới để lấy sự kiện y tế theo ID
+    MedicalEvent createEventWithSupplies(com.school_medical.school_medical_management_system.models.MedicalEventRequest request);
 }
