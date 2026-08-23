@@ -157,7 +157,16 @@ const StudentHealthProfile = () => {
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px", flexWrap: "wrap" }}>
                 <label>Chọn học sinh:</label>
                 <select value={selectedStudentId || ""} onChange={(e) => setSelectedStudentId(e.target.value)} style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}>
-                  {children.map((child) => (<option key={child.id} value={child.id}>{child.name} ({child.grade})</option>))}
+                  {children.map((child) => {
+                    const cls = classList.find((c) => (c.id || c.class_id) === child.classId);
+                    const classNameStr = cls ? cls.className : (child.grade || "");
+                    const classDisplay = classNameStr ? (classNameStr.startsWith("Lớp") ? classNameStr : `Lớp ${classNameStr}`) : "";
+                    return (
+                      <option key={child.id} value={child.id}>
+                        {child.name} {classDisplay ? `(${classDisplay})` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
                 <button type="button" onClick={handleOpenAddModal} style={{ backgroundColor: "#5e50e6", color: "white", border: "none", padding: "6px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "500" }}>➕ Thêm học sinh mới</button>
                 {selectedStudentId && (<button type="button" onClick={handleOpenEditModal} style={{ backgroundColor: "#eab308", color: "white", border: "none", padding: "6px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "500" }}>✏️ Chỉnh sửa hồ sơ</button>)}
@@ -173,6 +182,11 @@ const StudentHealthProfile = () => {
             <div className="info-columns">
               <div className="contact-left">
                 <p><strong>Họ tên:</strong> {profile.name || "Chưa chọn"}</p>
+                <p><strong>Lớp học:</strong> {(() => {
+                  const cls = classList.find((c) => (c.id || c.class_id) === profile.classId);
+                  const classNameStr = cls ? cls.className : (profile.grade || "");
+                  return classNameStr ? (classNameStr.startsWith("Lớp") ? classNameStr : `Lớp ${classNameStr}`) : "Chưa phân lớp";
+                })()}</p>
                 <p><strong>Giới tính:</strong> {profile.gender}</p>
                 <p><strong>Dị ứng:</strong> {profile.allergy}</p>
                 <p><strong>Bệnh mãn tính:</strong> {profile.chronicDisease}</p>
