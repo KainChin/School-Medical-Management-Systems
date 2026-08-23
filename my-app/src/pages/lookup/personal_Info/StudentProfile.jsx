@@ -411,9 +411,10 @@ const StudentHealthProfile = () => {
                   >
                     {classList.map((cls) => {
                       const cId = cls.id || cls.class_id;
+                      const roomText = cls.room ? (cls.room.startsWith('P.') ? cls.room.replace('P.', 'Phòng ') : cls.room) : '';
                       return (
                         <option key={cId || cls.className} value={cId}>
-                          Lớp {cls.className} {cls.room ? `(${cls.room})` : ''}
+                          {cls.className} {roomText ? `– ${roomText}` : ''}
                         </option>
                       );
                     })}
