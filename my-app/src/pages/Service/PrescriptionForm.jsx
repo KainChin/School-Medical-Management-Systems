@@ -93,25 +93,43 @@ export default function PrescriptionForm({
         />
       </div>
 
-      {/* ✅ BẮT BUỘC ĐÍNH KÈM HÌNH ẢNH THUỐC */}
+      {/* ✅ BẮT BUỘC ĐÍNH KÈM HÌNH ẢNH THUỐC (HỖ TRỢ FILE & LINK URL) */}
       <div className="field" style={{ marginTop: "12px" }}>
         <label style={{ color: "#d97706", fontWeight: "600" }}>
-          📷 Hình ảnh thuốc (Bắt buộc) *
+          📷 Hình ảnh thuốc (Bắt buộc: Tải tệp hoặc dán link URL) *
         </label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          style={{ padding: "6px", border: "1px dashed #4F46E5", borderRadius: "6px", width: "100%" }}
-        />
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            style={{ padding: "6px", border: "1px dashed #4F46E5", borderRadius: "6px", width: "100%" }}
+          />
+
+          <div style={{ textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>-- HOẶC --</div>
+
+          <input
+            type="url"
+            placeholder="Dán đường dẫn ảnh URL (Ví dụ: https://example.com/thuoc.jpg)"
+            value={form.imageUrl && !form.imageUrl.startsWith("data:") ? form.imageUrl : ""}
+            onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
+            style={{ padding: "8px", border: "1px solid #ccc", borderRadius: "6px", width: "100%" }}
+          />
+        </div>
+
         {form.imageUrl && (
-          <div style={{ marginTop: "8px", textAlign: "center" }}>
+          <div style={{ marginTop: "10px", textAlign: "center" }}>
             <img
               src={form.imageUrl}
-              alt="Ảnh thuốc"
-              style={{ maxHeight: "120px", borderRadius: "8px", border: "2px solid #4F46E5", display: "inline-block" }}
+              alt="Ảnh thuốc preview"
+              onError={(e) => {
+                e.target.onerror = null;
+                alert("⚠️ Không thể tải ảnh từ liên kết URL này. Vui lòng kiểm tra lại đường dẫn!");
+              }}
+              style={{ maxHeight: "130px", maxWidth: "100%", borderRadius: "8px", border: "2px solid #4F46E5", display: "inline-block", objectFit: "cover" }}
             />
-            <p style={{ fontSize: "12px", color: "#16a34a", marginTop: "4px" }}>✓ Đã tải ảnh thuốc thành công</p>
+            <p style={{ fontSize: "12px", color: "#16a34a", marginTop: "4px", fontWeight: "500" }}>✓ Đã nhận diện hình ảnh thuốc thành công</p>
           </div>
         )}
       </div>
