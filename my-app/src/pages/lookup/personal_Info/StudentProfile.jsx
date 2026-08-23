@@ -74,7 +74,6 @@ const StudentHealthProfile = () => {
   useEffect(() => {
     fetchMyChildren();
 
-    // Fetch danh sách lớp học từ Backend
     fetch("http://localhost:8080/api/classes")
       .then((res) => res.json())
       .then((data) => {
@@ -88,7 +87,6 @@ const StudentHealthProfile = () => {
             grade: firstCls.className || "5A1"
           }));
         } else {
-          // Fallback mặc định
           setClassList([
             { id: 1, className: "5A1" },
             { id: 2, className: "5A2" },
@@ -138,16 +136,67 @@ const StudentHealthProfile = () => {
     if (path && location.pathname !== path) navigate(path);
   };
 
+  // ✅ HÀM VALIDATE DỮ LIỆU ĐẦU VÀO CỰC KỲ CHẶT CHẼ
+  const validateStudentForm = () => {
+    const nameTrimmed = newStudent.studentName.trim();
+    
+    // 1. Validate Họ và tên (Không chứa số hay ký tự đặc biệt, ít nhất 2 từ hoặc 2 ký tự)
+    const nameRegex = /^[a-zA-ZàáãạảăắằẳẵặâấầẩẫậèéẹẻẽêềếểễệđìíĩỉịòóõọỏôốồổỗộơớờởỡợùúũụủưứừửữựỳỵỷỹýÀÁÃẠẢĂẮẰẲẴẶÂẤẦẨẪẬÈÉẸẺẼÊỀẾỂỄỆĐÌÍĨỈỊÒÓÕỌỎÔỐỒỔỖỘƠỚỜỞỠỢÙÚŨỤỦƯỨỪỬỮỰỲỴỶỸÝ\s]+$/;
+    if (!nameTrimmed || nameTrimmed.length < 2) {
+      alert("⚠️ Họ và tên học sinh phải có ít nhất 2 ký tự!");
+      return false;
+    }
+    if (!nameRegex.test(nameTrimmed)) {
+      alert("⚠️ Họ và tên học sinh chỉ được chứa chữ cái, không bao gồm số hay ký tự đặc biệt!");
+      return false;
+    }
+
+    // 2. Validate Ngày sinh (Phải từ 5 đến 18 tuổi, không được chọn ngày tương lai)
+    if (!newStudent.dob) {
+      alert("⚠️ Vui lòng chọn ngày sinh cho học sinh!");
+      return false;
+    }
+    const dobDate = new Date(newStudent.dob);
+    const today = new Date();
+    if (dobDate > today) {
+      alert("⚠️ Ngày sinh không thể là một ngày trong tương lai!");
+      return false;
+    }
+    const ageDiffMs = today - dobDate;
+    const ageDate = new Date(ageDiffMs);
+    const age = Math.abs(ageDate.getUTCFullYear() - 1970);
+    if (age < 5 || age > 18) {
+      alert(`⚠️ Độ tuổi học sinh không hợp lệ (${age} tuổi). Học sinh phải trong độ tuổi từ 5 đến 18 tuổi!`);
+      return false;
+    }
+
+    // 3. Validate Chiều cao (50cm - 220cm)
+    const height = Number(newStudent.height);
+    if (isNaN(height) || height < 50 || height > 220) {
+      alert("⚠️ Chiều cao không hợp lệ! Vui lòng nhập trong khoảng từ 50cm đến 220cm.");
+      return false;
+    }
+
+    // 4. Validate Cân nặng (10kg - 150kg)
+    const weight = Number(newStudent.weight);
+    if (isNaN(weight) || weight < 10 || weight > 150) {
+      alert("⚠️ Cân nặng không hợp lệ! Vui lòng nhập trong khoảng từ 10kg đến 150kg.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleAddStudentSubmit = async (e) => {
     e.preventDefault();
-    if (!newStudent.studentName || !newStudent.dob) {
-      alert("Vui lòng điền họ tên và ngày sinh!");
-      return;
-    }
+
+    // Chạy kiểm tra dữ liệu trước khi gửi
+    if (!validateStudentForm()) return;
 
     try {
       const payload = {
         ...newStudent,
+        studentName: newStudent.studentName.trim(),
         dob: new Date(newStudent.dob).toISOString(),
         height: Number(newStudent.height),
         weight: Number(newStudent.weight),
@@ -186,7 +235,6 @@ const StudentHealthProfile = () => {
         medicalHistory: "Không có",
         bmi: 20
       });
-      // Refresh danh sách con
       fetchMyChildren();
     } catch (err) {
       alert(err.message);
@@ -227,7 +275,7 @@ const StudentHealthProfile = () => {
             <div className="info-text" style={{ flex: 1 }}>
               <h2>Hồ sơ sức khỏe học sinh</h2>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+              <div style={{ display: "flex", itemsCenter: "center", gap: "12px", marginTop: "8px" }}>
                 <label>Chọn học sinh:</label>
                 <select
                   value={selectedStudentId || ""}
@@ -319,6 +367,7 @@ const StudentHealthProfile = () => {
                   <input
                     type="text"
                     required
+                    placeholder="VD: Nguyễn Văn An"
                     value={newStudent.studentName}
                     onChange={(e) => setNewStudent({ ...newStudent, studentName: e.target.value })}
                     style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "4px" }}
@@ -386,6 +435,8 @@ const StudentHealthProfile = () => {
                   <label style={{ fontSize: "13px", fontWeight: "600" }}>Chiều cao (cm)</label>
                   <input
                     type="number"
+                    min="50"
+                    max="220"
                     value={newStudent.height}
                     onChange={(e) => setNewStudent({ ...newStudent, height: e.target.value })}
                     style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "4px" }}
@@ -395,6 +446,8 @@ const StudentHealthProfile = () => {
                   <label style={{ fontSize: "13px", fontWeight: "600" }}>Cân nặng (kg)</label>
                   <input
                     type="number"
+                    min="10"
+                    max="150"
                     value={newStudent.weight}
                     onChange={(e) => setNewStudent({ ...newStudent, weight: e.target.value })}
                     style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "4px" }}
